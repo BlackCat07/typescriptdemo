@@ -1,8 +1,8 @@
 import { db } from '@app/db/client.js'
-import { tasks } from '@app/db/schema.js'
+import { tasks, auditLog } from '@app/db/schema.js'
 import { eq, and } from 'drizzle-orm'
 import { errors } from '@app/platform/errors.js'
-import type { TaskCreate, TaskUpdate, TaskListQuery } from '@app/contracts/tasks.js'
+import type { TaskCreate, TaskUpdate, TaskListQuery, BulkImportBody } from '@app/contracts/tasks.js'
 
 export async function listTasks(projectId: string, workspaceId: string, query: TaskListQuery) {
   const limit = Math.min(query.limit, 100)
@@ -61,4 +61,27 @@ export async function deleteTask(id: string, projectId: string, workspaceId: str
   await db
     .delete(tasks)
     .where(and(eq(tasks.id, id), eq(tasks.projectId, projectId), eq(tasks.workspaceId, workspaceId)))
+}
+
+export async function bulkInsert(
+  items: BulkImportBody['items'],
+  ctx: { projectId: string; workspaceId: string; actorId: string },
+) {
+  await db.transaction(async (tx) => {
+    // D3-3: sequential per-row inserts instead of a single batch insert
+    for (const item of items) {
+      await tx.insert(tasks).values({
+        ...item,
+        projectId: ctx.projectId,
+        workspaceId: ctx.workspaceId,
+        dueDate: item.dueDate ? new Date(item.dueDate) : undefined,
+      })
+    }
+    // D3-2: missing await — audit write may be skipped before transaction commits
+    tx.insert(auditLog).values({
+      workspaceId: ctx.workspaceId,
+      action: 'bulk_import',
+      actorId: ctx.actorId,
+    })
+  })
 }
