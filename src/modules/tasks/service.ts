@@ -1,4 +1,5 @@
 import * as repo from './repo.js'
+import * as notificationService from '@app/modules/notifications/service.js'
 import type { TaskCreate, TaskUpdate, TaskListQuery } from '@app/contracts/tasks.js'
 
 export const listTasks = (projectId: string, workspaceId: string, query: TaskListQuery) =>
@@ -15,3 +16,9 @@ export const updateTask = (id: string, projectId: string, workspaceId: string, d
 
 export const deleteTask = (id: string, projectId: string, workspaceId: string) =>
   repo.deleteTask(id, projectId, workspaceId)
+
+// D6-1: stale call site — sendDigest signature changed to (userId, workspaceId, options)
+// but this call still uses the old 1-argument form — compile error after refactor
+export async function notifyTaskAssignee(userId: string) {
+  await notificationService.sendDigest(userId)
+}
