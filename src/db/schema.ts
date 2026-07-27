@@ -51,6 +51,7 @@ export const tasks = pgTable('tasks', {
   status: text('status').notNull().default('todo'),
   assigneeId: uuid('assignee_id').references(() => users.id),
   dueDate: timestamp('due_date', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
