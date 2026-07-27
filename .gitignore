@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 .env.*
+
+# local spec files
+explanation.md
+TypeScriptDemo.md
