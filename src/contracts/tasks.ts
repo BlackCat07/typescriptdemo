@@ -11,8 +11,10 @@ export const TaskCreateSchema = z.object({
 export const TaskUpdateSchema = TaskCreateSchema.partial()
 
 export const TaskListQuerySchema = z.object({
-  page: z.coerce.number().int().min(0).default(0),
+  page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(50),
+  overdue: z.coerce.boolean().optional(),
+  dueBefore: z.string().optional(),
 })
 
 export type TaskCreate = z.infer<typeof TaskCreateSchema>
