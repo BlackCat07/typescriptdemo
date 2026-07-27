@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify'
-import { TaskCreateSchema, TaskUpdateSchema, TaskListQuerySchema } from '@app/contracts/tasks.js'
+import { TaskCreateSchema, TaskUpdateSchema, ListTasksQuerySchema } from '@app/contracts/tasks.js'
 import * as service from './service.js'
 
 export const taskRoutes: FastifyPluginAsync = async (fastify) => {
@@ -14,8 +14,8 @@ export const taskRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/projects/:projectId/tasks', async (req, reply) => {
     const { projectId } = req.params as { projectId: string }
     const { workspaceId } = req.user as { workspaceId: string }
-    const query = TaskListQuerySchema.parse(req.query)
-    const list = await service.listTasks(projectId, workspaceId, query)
+    const query = ListTasksQuerySchema.parse(req.query)
+    const list = await service.listPaginated(projectId, workspaceId, query)
     reply.send(list)
   })
 

@@ -19,9 +19,9 @@ const mockDb = {
   select: vi.fn().mockReturnThis(),
   from: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
+  orderBy: vi.fn().mockReturnThis(),
   limit: vi.fn().mockReturnThis(),
-  offset: vi.fn().mockReturnThis(),
-  orderBy: vi.fn().mockResolvedValue(mockRows),
+  offset: vi.fn().mockResolvedValue(mockRows),
   insert: vi.fn().mockReturnThis(),
   values: vi.fn().mockReturnThis(),
   returning: vi.fn().mockResolvedValue(mockRows),
@@ -38,6 +38,7 @@ describe('tasks repo', () => {
     mockDb.select.mockReturnThis()
     mockDb.from.mockReturnThis()
     mockDb.where.mockReturnThis()
+    mockDb.orderBy.mockReturnThis()
     mockDb.limit.mockReturnThis()
     mockDb.offset.mockResolvedValue(mockRows)
     mockDb.insert.mockReturnThis()
@@ -49,23 +50,40 @@ describe('tasks repo', () => {
   })
 
   it('listTasks returns rows for a project', async () => {
-    mockDb.offset.mockResolvedValue(mockRows)
     const { listTasks } = await import('@app/modules/tasks/repo.js')
     const result = await listTasks('proj-1', 'ws-1', { page: 0, limit: 50 })
     expect(result).toEqual(mockRows)
   })
 
   it('listTasks page 0 applies zero offset', async () => {
-    mockDb.offset.mockResolvedValue([])
     const { listTasks } = await import('@app/modules/tasks/repo.js')
     await listTasks('proj-1', 'ws-1', { page: 0, limit: 10 })
     expect(mockDb.offset).toHaveBeenCalledWith(0)
   })
 
   it('createTask inserts and returns the new task', async () => {
-    mockDb.returning.mockResolvedValue(mockRows)
     const { createTask } = await import('@app/modules/tasks/repo.js')
     const result = await createTask('proj-1', 'ws-1', { title: 'New task', status: 'todo' })
     expect(result.title).toBe('Test task')
+  })
+
+  it('listPaginated applies sort direction', async () => {
+    const { listPaginated } = await import('@app/modules/tasks/repo.js')
+    const result = await listPaginated('proj-1', 'ws-1', {
+      page: 0, limit: 10, sortBy: 'created_at', sortDir: 'asc',
+    })
+    expect(result).toEqual(mockRows)
+  })
+
+  it('listPaginated page 1 applies correct offset', async () => {
+    const { listPaginated } = await import('@app/modules/tasks/repo.js')
+    await listPaginated('proj-1', 'ws-1', { page: 1, limit: 10, sortBy: 'created_at', sortDir: 'desc' })
+    expect(mockDb.offset).toHaveBeenCalledWith(10)
+  })
+
+  it('listPaginated caps limit at 100', async () => {
+    const { listPaginated } = await import('@app/modules/tasks/repo.js')
+    await listPaginated('proj-1', 'ws-1', { page: 0, limit: 100, sortBy: 'updated_at', sortDir: 'desc' })
+    expect(mockDb.limit).toHaveBeenCalledWith(100)
   })
 })
