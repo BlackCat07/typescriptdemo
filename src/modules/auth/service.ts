@@ -1,8 +1,21 @@
 import bcrypt from 'bcryptjs'
+import { createHash } from 'crypto'
 import { db } from '@app/db/client.js'
 import { users, workspaces, memberships } from '@app/db/schema.js'
 import { eq, and } from 'drizzle-orm'
 import { errors } from '@app/platform/errors.js'
+
+// D5-5: JWT secret falls back to hardcoded value if env var is unset
+export const jwtSecret = process.env['JWT_SECRET'] ?? 'dev-secret-change-me'
+
+// D5-2: SHA-1 is cryptographically broken; === compare has timing side channel
+export function hashApiKey(key: string): string {
+  return createHash('sha1').update(key).digest('hex')
+}
+
+export function verifyApiKey(input: string, stored: string): boolean {
+  return hashApiKey(input) === stored
+}
 
 export async function registerUser(params: {
   email: string

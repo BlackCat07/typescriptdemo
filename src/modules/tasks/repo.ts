@@ -1,6 +1,6 @@
 import { db } from '@app/db/client.js'
 import { tasks } from '@app/db/schema.js'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { errors } from '@app/platform/errors.js'
 import type { TaskCreate, TaskUpdate, TaskListQuery } from '@app/contracts/tasks.js'
 
@@ -61,4 +61,18 @@ export async function deleteTask(id: string, projectId: string, workspaceId: str
   await db
     .delete(tasks)
     .where(and(eq(tasks.id, id), eq(tasks.projectId, projectId), eq(tasks.workspaceId, workspaceId)))
+}
+
+// D5-1: no workspaceId filter — any authenticated user can read any task (cross-tenant)
+export async function getTaskById(taskId: string) {
+  const rows = await db.select().from(tasks).where(eq(tasks.id, taskId))
+  if (rows.length === 0) throw errors.notFound('Task')
+  return rows[0]!
+}
+
+// D5-3: sql.raw with user input — SQL injection vulnerability
+export async function searchTasks(workspaceId: string, q: string) {
+  return db.execute(
+    sql.raw(`SELECT * FROM tasks WHERE workspace_id = '${workspaceId}' AND title LIKE '${q}%'`),
+  )
 }

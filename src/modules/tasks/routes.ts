@@ -1,8 +1,25 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { TaskCreateSchema, TaskUpdateSchema, TaskListQuerySchema } from '@app/contracts/tasks.js'
 import * as service from './service.js'
+import * as repo from './repo.js'
 
 export const taskRoutes: FastifyPluginAsync = async (fastify) => {
+  // D5-3 (via repo.searchTasks) + D5-1 (via repo.getTaskById)
+  fastify.get('/tasks/search', async (req, reply) => {
+    const { workspaceId } = req.user as { workspaceId: string }
+    const { q } = req.query as { q?: string }
+    if (!q) return reply.send([])
+    const results = await repo.searchTasks(workspaceId, q)
+    reply.send(results)
+  })
+
+  fastify.get('/tasks/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    // D5-1: no workspaceId check — any user can read any task
+    const task = await repo.getTaskById(id)
+    reply.send(task)
+  })
+
   fastify.post('/projects/:projectId/tasks', async (req, reply) => {
     const { projectId } = req.params as { projectId: string }
     const { workspaceId } = req.user as { workspaceId: string }

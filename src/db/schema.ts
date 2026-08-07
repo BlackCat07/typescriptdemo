@@ -60,6 +60,22 @@ export const tasks = pgTable('tasks', {
   dueDateIdx: index('tasks_due_date_idx').on(t.dueDate),
 }))
 
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id),
+  name: text('name').notNull(),
+  keyHash: text('key_hash').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const webhooks = pgTable('webhooks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id),
+  url: text('url').notNull(),
+  events: text('events').array().notNull().default([]),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
 export const comments = pgTable('comments', {
   id: uuid('id').primaryKey().defaultRandom(),
   taskId: uuid('task_id').notNull().references(() => tasks.id),

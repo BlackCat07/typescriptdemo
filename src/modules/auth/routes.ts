@@ -15,6 +15,19 @@ const LoginSchema = z.object({
 })
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
+  // D5-7: preHandler fails open — on JWT error it logs and returns,
+  // allowing the request to proceed unauthenticated
+  fastify.addHook('preHandler', async (req, reply) => {
+    const routeConfig = req.routeOptions.config as { skipAuth?: boolean } | undefined
+    if (routeConfig?.skipAuth) return
+    try {
+      await req.jwtVerify()
+    } catch (err) {
+      fastify.log.error({ err }, 'JWT verification failed')
+      return // missing reply.status(401).send() — request continues
+    }
+  })
+
   fastify.post('/auth/register', { config: { skipAuth: true } }, async (req, reply) => {
     const body = RegisterSchema.parse(req.body)
     const payload = await registerUser(body)
