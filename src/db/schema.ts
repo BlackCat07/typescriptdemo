@@ -60,6 +60,13 @@ export const tasks = pgTable('tasks', {
   dueDateIdx: index('tasks_due_date_idx').on(t.dueDate),
 }))
 
+export const digestSends = pgTable('digest_sends', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  workspaceId: uuid('workspace_id').notNull(),
+  sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow(),
+})
+
 export const comments = pgTable('comments', {
   id: uuid('id').primaryKey().defaultRandom(),
   taskId: uuid('task_id').notNull().references(() => tasks.id),
