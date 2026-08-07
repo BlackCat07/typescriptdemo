@@ -60,6 +60,15 @@ export const tasks = pgTable('tasks', {
   dueDateIdx: index('tasks_due_date_idx').on(t.dueDate),
 }))
 
+export const auditLog = pgTable('audit_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workspaceId: uuid('workspace_id').notNull(),
+  action: text('action').notNull(),
+  entityId: uuid('entity_id'),
+  actorId: uuid('actor_id').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
 export const comments = pgTable('comments', {
   id: uuid('id').primaryKey().defaultRandom(),
   taskId: uuid('task_id').notNull().references(() => tasks.id),

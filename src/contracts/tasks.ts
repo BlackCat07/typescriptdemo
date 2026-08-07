@@ -15,6 +15,11 @@ export const TaskListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 })
 
+export const BulkImportBodySchema = z.object({
+  items: z.array(TaskCreateSchema).min(1),
+})
+
+export type BulkImportBody = z.infer<typeof BulkImportBodySchema>
 export type TaskCreate = z.infer<typeof TaskCreateSchema>
 export type TaskUpdate = z.infer<typeof TaskUpdateSchema>
 export type TaskListQuery = z.infer<typeof TaskListQuerySchema>

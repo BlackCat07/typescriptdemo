@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
-import { TaskCreateSchema, TaskUpdateSchema, TaskListQuerySchema } from '@app/contracts/tasks.js'
+import { TaskCreateSchema, TaskUpdateSchema, TaskListQuerySchema, BulkImportBodySchema } from '@app/contracts/tasks.js'
 import * as service from './service.js'
+import * as repo from './repo.js'
 
 export const taskRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/projects/:projectId/tasks', async (req, reply) => {
@@ -39,5 +40,23 @@ export const taskRoutes: FastifyPluginAsync = async (fastify) => {
     const { workspaceId } = req.user as { workspaceId: string }
     await service.deleteTask(id, projectId, workspaceId)
     reply.status(204).send()
+  })
+
+  fastify.post('/projects/:projectId/tasks/bulk', async (req, reply) => {
+    const { projectId } = req.params as { projectId: string }
+    const { workspaceId, userId } = req.user as { workspaceId: string; userId: string }
+    const body = BulkImportBodySchema.parse(req.body)
+
+    // D3-1: forEach with async callback — promises are fire-and-forget
+    // D3-4: empty catch swallows all errors and reports false success
+    try {
+      body.items.forEach(async (item) => {
+        await repo.bulkInsert([item], { projectId, workspaceId, actorId: userId })
+      })
+    } catch {
+      // errors silently swallowed — response below always claims success
+    }
+
+    reply.status(201).send({ created: body.items.length })
   })
 }
