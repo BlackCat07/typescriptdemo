@@ -6,3 +6,4 @@ dist/
 # local spec files
 explanation.md
 TypeScriptDemo.md
+.pnpm-store/
