@@ -1,8 +1,8 @@
 import { db } from '@app/db/client.js'
 import { tasks } from '@app/db/schema.js'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, asc, desc } from 'drizzle-orm'
 import { errors } from '@app/platform/errors.js'
-import type { TaskCreate, TaskUpdate, TaskListQuery } from '@app/contracts/tasks.js'
+import type { TaskCreate, TaskUpdate, TaskListQuery, ListTasksQuery } from '@app/contracts/tasks.js'
 
 export async function listTasks(projectId: string, workspaceId: string, query: TaskListQuery) {
   const limit = Math.min(query.limit, 100)
@@ -11,6 +11,30 @@ export async function listTasks(projectId: string, workspaceId: string, query: T
     .select()
     .from(tasks)
     .where(and(eq(tasks.projectId, projectId), eq(tasks.workspaceId, workspaceId)))
+    .limit(limit)
+    .offset(offset)
+}
+
+const sortColumns = {
+  created_at: tasks.createdAt,
+  due_date: tasks.dueDate,
+  updated_at: tasks.updatedAt,
+} as const
+
+export async function listPaginated(
+  projectId: string,
+  workspaceId: string,
+  query: ListTasksQuery,
+) {
+  const limit = Math.min(query.limit, 100)
+  const offset = query.page * limit
+  const col = sortColumns[query.sortBy]
+  const order = query.sortDir === 'asc' ? asc(col) : desc(col)
+  return db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.projectId, projectId), eq(tasks.workspaceId, workspaceId)))
+    .orderBy(order)
     .limit(limit)
     .offset(offset)
 }
