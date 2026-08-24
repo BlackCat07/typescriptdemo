@@ -71,3 +71,16 @@ export const comments = pgTable('comments', {
   taskIdIdx: index('comments_task_id_idx').on(t.taskId),
   workspaceIdIdx: index('comments_workspace_id_idx').on(t.workspaceId),
 }))
+
+export const activityLog = pgTable('activity_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  taskId: uuid('task_id').notNull().references(() => tasks.id),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id),
+  actorId: uuid('actor_id').notNull().references(() => users.id),
+  action: text('action').notNull(),
+  detail: text('detail'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  taskIdIdx: index('activity_log_task_id_idx').on(t.taskId),
+  workspaceIdIdx: index('activity_log_workspace_id_idx').on(t.workspaceId),
+}))
