@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, integer, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const workspaces = pgTable('workspaces', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -70,4 +70,32 @@ export const comments = pgTable('comments', {
 }, (t) => ({
   taskIdIdx: index('comments_task_id_idx').on(t.taskId),
   workspaceIdIdx: index('comments_workspace_id_idx').on(t.workspaceId),
+}))
+
+export const taskRecurrences = pgTable('task_recurrences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  taskId: uuid('task_id').notNull().references(() => tasks.id),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id),
+  frequency: text('frequency').notNull().default('weekly'),
+  intervalDays: integer('interval_days').notNull().default(7),
+  reminderLeadHours: integer('reminder_lead_hours').notNull().default(24),
+  timezone: text('timezone').notNull().default('UTC'),
+  nextRunAt: timestamp('next_run_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  taskIdIdx: index('task_recurrences_task_id_idx').on(t.taskId),
+}))
+
+export const reminders = pgTable('reminders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  recurrenceId: uuid('recurrence_id').notNull().references(() => taskRecurrences.id),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id),
+  taskId: uuid('task_id').notNull().references(() => tasks.id),
+  nextRunAt: timestamp('next_run_at', { withTimezone: true }).notNull(),
+  sent: boolean('sent').notNull().default(false),
+  attempts: integer('attempts').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  recurrenceIdIdx: index('reminders_recurrence_id_idx').on(t.recurrenceId),
 }))
