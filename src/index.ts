@@ -7,6 +7,8 @@ import { projectRoutes } from '@app/modules/projects/routes.js'
 import { taskRoutes } from '@app/modules/tasks/routes.js'
 import { commentRoutes } from '@app/modules/comments/routes.js'
 import { notificationRoutes } from '@app/modules/notifications/routes.js'
+import { recurrenceRoutes } from '@app/modules/recurrence/routes.js'
+import { startScheduler } from '@app/platform/jobs.js'
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
@@ -45,6 +47,9 @@ export async function buildApp() {
   await app.register(taskRoutes)
   await app.register(commentRoutes)
   await app.register(notificationRoutes)
+  await app.register(recurrenceRoutes)
+
+  startScheduler(Number(process.env['SCHEDULER_INTERVAL_MS'] ?? 60_000))
 
   return app
 }
