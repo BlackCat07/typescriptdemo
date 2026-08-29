@@ -41,7 +41,7 @@ jobs:
       # repository name, which the host sets but which is mapped here so the step
       # does not depend on inheriting it.
       - name: DevDigest review
-        run: node .devdigest/runner.mjs review --agent test-quality-reviewer --post-as github_review
+        run: node .devdigest/runner.mjs review --agent security-reviewer --post-as github_review
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
