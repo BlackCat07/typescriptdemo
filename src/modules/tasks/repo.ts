@@ -57,6 +57,16 @@ export async function updateTask(
   return rows[0]!
 }
 
+export async function assignTask(id: string, assigneeId: string) {
+  const rows = await db
+    .update(tasks)
+    .set({ assigneeId, updatedAt: new Date() })
+    .where(eq(tasks.id, id))
+    .returning()
+  if (rows.length === 0) throw new Error('Task not found')
+  return rows[0]!
+}
+
 export async function deleteTask(id: string, projectId: string, workspaceId: string) {
   await db
     .delete(tasks)

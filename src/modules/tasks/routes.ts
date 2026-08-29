@@ -1,6 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify'
+import { z } from 'zod'
 import { TaskCreateSchema, TaskUpdateSchema, TaskListQuerySchema } from '@app/contracts/tasks.js'
 import * as service from './service.js'
+
+const assignBody = z.object({ assigneeId: z.string().uuid() })
 
 export const taskRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/projects/:projectId/tasks', async (req, reply) => {
@@ -8,7 +11,7 @@ export const taskRoutes: FastifyPluginAsync = async (fastify) => {
     const { workspaceId } = req.user as { workspaceId: string }
     const body = TaskCreateSchema.parse(req.body)
     const task = await service.createTask(projectId, workspaceId, body)
-    reply.status(201).send(task)
+    reply.status(200).send(task)
   })
 
   fastify.get('/projects/:projectId/tasks', async (req, reply) => {
@@ -31,6 +34,13 @@ export const taskRoutes: FastifyPluginAsync = async (fastify) => {
     const { workspaceId } = req.user as { workspaceId: string }
     const body = TaskUpdateSchema.parse(req.body)
     const task = await service.updateTask(id, projectId, workspaceId, body)
+    reply.send(task)
+  })
+
+  fastify.post('/projects/:projectId/tasks/:id/assign', async (req, reply) => {
+    const { id } = req.params as { projectId: string; id: string }
+    const { assigneeId } = req.body as z.infer<typeof assignBody>
+    const task = await service.assignTask(id, assigneeId)
     reply.send(task)
   })
 
